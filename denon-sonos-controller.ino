@@ -1,9 +1,7 @@
-//#include "application.h"
 #include "HttpClient.h"
 
-/**
-* Declaring the variables.
-*/
+//Declaring the variables.
+
 unsigned int nextTime = 0;    // Next time to contact the server
 HttpClient http;
 
@@ -18,38 +16,22 @@ http_header_t headers[] = {
 http_request_t denon_request;
 http_response_t denon_response;
 
-//TCPClient client; //for IFTTT
-
 TCPClient sonos;
 byte sonosIP[] = { 192, 168, 1, 149 }; //put your Sonos_IP_address
-String denonIP = "192.168.1.140";
+String denonIP = "192.168.1.140"; //put your Denon AVR_IP_address
 String sonosResponse;
 String sonosTransportState = "";
 String previousState;
 
 unsigned long resetTimer = millis();
 
-
 void setup() {
     Serial.begin(9600);
-    
     Serial.println();
     Serial.println("Application>\tStart of Loop.");
     // Request path and body can be set at runtime or at setup.
     denon_request.hostname = denonIP; //Denon IP
     denon_request.port = 80;
-    denon_request.path = "/MainZone/index.put.asp?cmd0=PutMasterVolumeBtn/>";
-
-    // The library also supports sending a body with your request:
-    //request.body = "{\"key\":\"value\"}";
-
-    // Get request
-    http.get(denon_request, denon_response, headers);
-    Serial.print("Application>\tResponse status: ");
-    Serial.println(denon_response.status);
-
-    Serial.print("Application>\tHTTP Response Body: ");
-    Serial.println(denon_response.body);
     
     //Set initial state 
     getSonosStatus();
@@ -57,7 +39,6 @@ void setup() {
     previousState = sonosTransportState;
     Particle.publish("sonosTransportState", sonosTransportState);
 }
-
 
 void getSonosStatus()
 /*
@@ -181,41 +162,17 @@ void loop() {
         //Serial.println(sonosTransportState);
         //Particle.publish(sonosTransportState);
         if (sonosTransportState == "PLAYING") {
-            //denon_request.path = "/MainZone/index.put.asp?cmd0=PutZone_OnOff%2FON";
-            //http.get(denon_request, denon_response, headers);
-            //Serial.print("Application>\tResponse status: ");
-            //Serial.println(denon_response.status);
-            //denonResponseCode = String::format("%d", denon_response.status);
-            //Particle.publish("Denon PWR ON response", denonResponseCode);
             sendDenonCommand("/MainZone/index.put.asp?cmd0=PutZone_OnOff%2FON");
             delay(3000);
+            
             //Wait for receiver to turn on and then select DVD input
-            //denon_request.path = "/MainZone/index.put.asp?cmd0=PutZone_InputFunction%2FCD";
-            //http.get(denon_request, denon_response, headers);
-            //Serial.print("Application>\tResponse status: ");
-            //Serial.println(denon_response.status);
-            //denonResponseCode = String::format("%d", denon_response.status);
-            //Particle.publish("Denon set DVD input response", denonResponseCode);
             sendDenonCommand("/MainZone/index.put.asp?cmd0=PutZone_InputFunction%2FCD");
             delay(50);
-            //Set volume to 35 (-45=35-80)
-            //denon_request.path = "/MainZone/index.put.asp?cmd0=PutMasterVolumeSet/-45.0";
-            //http.get(denon_request, denon_response, headers);
-            //Serial.print("Application>\tResponse status: ");
-            //Serial.println(denon_response.status);
-            //denonResponseCode = String::format("%d", denon_response.status);
-            //Particle.publish("Denon set volume response", denonResponseCode);
-            sendDenonCommand("/MainZone/index.put.asp?cmd0=PutMasterVolumeSet/-45.0");
             
+            //Set volume to 35 (-45=35-80)
+            sendDenonCommand("/MainZone/index.put.asp?cmd0=PutMasterVolumeSet/-45.0");
         }
         else if (sonosTransportState == "PAUSED_PLAYBACK" || sonosTransportState == "STOPPED") {
-            //denon_request.path = "/MainZone/index.put.asp?cmd0=PutMasterVolumeBtn/<";
-            //denon_request.path = "/MainZone/index.put.asp?cmd0=PutSystem_OnStandby%2FSTANDBY";
-            //http.get(denon_request, denon_response, headers);
-            //Serial.print("Application>\tResponse status: ");
-            //Serial.println(denon_response.status);
-            //denonResponseCode = String::format("%d", denon_response.status);
-            //Particle.publish("Denon PWR OFF response", denonResponseCode);
             sendDenonCommand("/MainZone/index.put.asp?cmd0=PutSystem_OnStandby%2FSTANDBY");
         }
         previousState = sonosTransportState;
@@ -223,7 +180,6 @@ void loop() {
     delay(1000);
     
     // Reset after 7h of operation
-    // ==================================
     if (millis() - resetTimer > 25200000) {
         System.reset();
     }
